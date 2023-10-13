@@ -13,7 +13,12 @@ class GetWeather(ListAPIView):
 
     def get(self, request, *args, **kwargs):
         weather_req = request_weather(self.request.query_params.get("city"), settings.API_KEY)
-        weather_model_latest = Weather.objects.latest('id')
+        try:
+            weather_model_latest = Weather.objects.latest('id')
+        except Exception:  # if first query fails
+            weather_model = create_model(weather_req)
+            serializer = WeatherSerializer(weather_model)
+            return Response(serializer.data)
         weather_req_time = strtoi_minutes(weather_model_latest.timestamp)
         weather_model_latest_time = strtoi_minutes(weather_req["timestamp"])
         print(abs(weather_req_time - weather_model_latest_time))
